@@ -1,0 +1,183 @@
+# =============================================================
+# Invoice Auditor Main Workflow Configuration
+# =============================================================
+# This defines the complete invoice auditing pipeline as a 
+# LangGraph StateGraph that orchestrates all agents.
+# =============================================================
+
+workflow_name: "invoice_auditor_workflow"
+description: "Complete multi-agent invoice auditing system with RAG"
+version: "1.0"
+
+# State schema - data passed through the entire workflow
+state_schema:
+  # Input
+  file_path:
+    type: str
+    description: "Path to invoice file (PDF, DOCX, PNG)"
+  
+  # Extraction stage
+  raw_text:
+    type: str
+    description: "Raw text extracted from document"
+  
+  # Translation stage
+  translated_text:
+    type: str
+    description: "Text translated to English"
+  
+  original_language:
+    type: str
+    description: "Detected language of original document"
+  
+  translation_confidence:
+    type: float
+    description: "Confidence score of translation"
+  
+  was_translated:
+    type: bool
+    description: "Whether document was translated"
+  
+  # Structured data extraction
+  invoice_data:
+    type: dict
+    description: "Structured invoice data (fields, line items)"
+  
+  # Validation stage
+  validation_result:
+    type: dict
+    description: "Validation results (recommendation, discrepancies)"
+  
+  # Reporting stage
+  report_text:
+    type: str
+    description: "Generated audit report"
+  
+  report_path:
+    type: str
+    description: "Path to saved JSON report"
+  
+  # RAG Query stage
+  rag_query:
+    type: str
+    description: "Query to ask about processed invoices"
+  
+  rag_answer:
+    type: str
+    description: "Answer from RAG system"
+  
+  rag_sources:
+    type: list
+    description: "Source invoices used for answer"
+  
+  rag_evaluation:
+    type: dict
+    description: "RAG quality scores"
+  
+  # Status
+  status:
+    type: str
+    description: "Current workflow status"
+  
+  error:
+    type: str
+    description: "Error message if any step fails"
+
+# Node definitions
+nodes:
+  - name: extraction_node
+    agent: ExtractorAgent
+    description: "Extract raw text from PDF/DOCX/PNG using OCR + parsing"
+    inputs: [file_path]
+    outputs: [raw_text]
+    
+  - name: translation_node
+    agent: TranslationAgent
+    description: "Detect language and translate to English using AWS Bedrock"
+    inputs: [raw_text]
+    outputs: [translated_text, original_language, translation_confidence, was_translated]
+    
+  - name: structured_extraction_node
+    agent: ExtractorAgent
+    description: "Extract structured data (invoice fields, line items) using LLM"
+    inputs: [translated_text]
+    outputs: [invoice_data]
+    
+  - name: validation_node
+    agent: ValidationAgent
+    description: "Data validation + Business validation against ERP"
+    inputs: [invoice_data]
+    outputs: [validation_result]
+    
+  - name: reporting_node
+    agent: ReportingAgent
+    description: "Generate audit report using LLM"
+    inputs: [invoice_data, validation_result]
+    outputs: [report_text, report_path]
+    
+  - name: indexing_node
+    agent: IndexingAgent
+    description: "Index invoice to FAISS for RAG querying"
+    inputs: [invoice_data, validation_result, report_text]
+    outputs: [status]
+  
+  - name: rag_subgraph_node
+    type: subgraph
+    description: "RAG query subgraph - retrieval, generation, reflection"
+    inputs: [rag_query]
+    outputs: [rag_answer, rag_sources, rag_evaluation]
+    subgraph_nodes:
+      - retrieval_node: "Retrieve relevant chunks from FAISS"
+      - generation_node: "Generate answer using LLM"
+      - reflection_node: "Evaluate answer quality (RAG Triad)"
+
+# Edge definitions (workflow flow)
+edges:
+  - from: START
+    to: extraction_node
+    
+  - from: extraction_node
+    to: translation_node
+    
+  - from: translation_node
+    to: structured_extraction_node
+    
+  - from: structured_extraction_node
+    to: validation_node
+    
+  - from: validation_node
+    to: reporting_node
+    
+  - from: reporting_node
+    to: indexing_node
+    
+  - from: indexing_node
+    to: rag_subgraph_node
+    description: "After indexing, automatically query the system"
+    
+  - from: rag_subgraph_node
+    to: END
+
+# Error handling
+error_handling:
+  strategy: "continue_with_error"
+  log_errors: true
+  fallback_behavior: "skip_failed_node"
+
+# Configuration
+config:
+  max_retries: 2
+  timeout_seconds: 120
+  enable_logging: true
+  parallel_execution: false
+  
+# Default RAG queries
+default_rag_queries:
+  - "Summarize the validation results for this invoice"
+  - "What are the key findings for invoice {invoice_no}?"
+
+# Monitoring
+monitoring:
+  track_state_changes: true
+  log_node_execution: true
+  measure_performance: true

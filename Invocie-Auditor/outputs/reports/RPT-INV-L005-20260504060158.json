@@ -1,0 +1,78 @@
+{
+  "report_id": "RPT-INV-L005-20260504060158",
+  "generated_at": "2026-05-04T06:01:58.980604",
+  "human_verified": false,
+  "invoice_summary": {
+    "invoice_no": "INV-L005",
+    "po_number": "PO-1005",
+    "vendor_name": "SwiftMove Couriers",
+    "total_amount": 255.75,
+    "currency": "USD"
+  },
+  "recommendation": "reject",
+  "discrepancies_count": 3,
+  "human_override": null,
+  "report": "# Invoice Audit Report for INV-L005\n\n## Executive Summary\nInvoice INV-L005 from SwiftMove Couriers on 25-May-2025, totaling USD 255.75, has been reviewed. Validation checks identified critical discrepancies, leading to a recommendation of **REJECT**. \n\n## Validation Status\n- Data Validation: ❌ FAIL\n- Business Validation: ❌ FAIL\n- ERP Status: ⚠️ discrepancy\n\n## Key Findings\n- 🛑 3 discrepancies identified, including 2 warnings and 1 error. \n- ⚠️ Line items 1 and 2 are missing item codes, impacting data consistency.\n- ❌ The item \"express boxes\" is not found in the associated PO (PO-1005), indicating a potential error or unauthorized purchase. \n\n## Recommendation \nIt is recommended to **REJECT** this invoice due to critical discrepancies. The missing item codes and the discrepancy between the invoice and PO suggest potential errors or unauthorized purchases. A manual review and clarification from the vendor are necessary before processing. \n\nThis report ensures a concise overview of the invoice's issues, enabling efficient decision-making and action by accounts payable teams.",
+  "full_data": {
+    "invoice_data": {
+      "invoice_no": "INV-L005",
+      "invoice_date": "25-May-2025",
+      "po_number": "PO-1005",
+      "vendor_name": "SwiftMove Couriers",
+      "currency": "USD",
+      "subtotal": 232.5,
+      "tax_amount": 23.25,
+      "total_amount": 255.75,
+      "line_items": [
+        {
+          "item_code": null,
+          "description": "Fuel Surcharge",
+          "qty": 1,
+          "unit_price": 120,
+          "total": 120
+        },
+        {
+          "item_code": null,
+          "description": "Express Boxes",
+          "qty": 25,
+          "unit_price": 4.5,
+          "total": 112.5
+        }
+      ],
+      "raw_text": "SwiftMove Couriers\n\n$F Express Lane, Chicago, tSA\n\nIuvotce: INV-L005\nDate: 25-May-2025\n\nPO: PO-1005\n\nItem ty Unit Total\nFuel Surcharge 1 120 120\n\nExpress Boxes 25 4.5 112.5\n\nSubtotal 232.5\nTAX 23.25\n\nTotal 255.75\n\f",
+      "original_language": "English",
+      "translation_confidence": 1.0,
+      "was_translated": false
+    },
+    "validation_result": {
+      "invoice_no": "INV-L005",
+      "is_valid": false,
+      "recommendation": "reject",
+      "discrepancies": [
+        {
+          "field": "line_items[0].item_code",
+          "issue": "missing",
+          "severity": "warning",
+          "message": "Line item 1 missing item_code"
+        },
+        {
+          "field": "line_items[1].item_code",
+          "issue": "missing",
+          "severity": "warning",
+          "message": "Line item 2 missing item_code"
+        },
+        {
+          "field": "line_item.None",
+          "issue": "item_not_in_po",
+          "severity": "error",
+          "actual": "express boxes",
+          "message": "Item express boxes not found in PO PO-1005"
+        }
+      ],
+      "missing_fields": [],
+      "data_validation_passed": false,
+      "business_validation_passed": false,
+      "erp_match_status": "discrepancy"
+    }
+  }
+}
